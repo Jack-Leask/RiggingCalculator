@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#172126">
+<title>Conductor Rigging Loads</title>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Conductor Rigging Loads</h1>
+      <p>Vertical and tension loads on rigging for transmission and distribution conductors. Basic for the field, Advanced with a route plan and profile.</p>
+    </div>
+    <div class="hbtns">
+      <button class="reset" id="helpTop" type="button" aria-expanded="false">How to use</button>
+      <button class="reset" id="reset" type="button">Reset example</button>
+    </div>
+  </header>
+  <div class="help" id="g-top" hidden></div>
+
+  <div class="seg big" role="radiogroup" aria-label="Calculator mode">
+    <label><input type="radio" name="tab" value="basic">Basic</label>
+    <label><input type="radio" name="tab" value="adv">Advanced</label>
+  </div>
+  <div class="seg" role="radiogroup" aria-label="Load type">
+    <label><input type="radio" name="load" value="vert">Vertical load</label>
+    <label><input type="radio" name="load" value="tens">Tension load</label>
+  </div>
+
+  <div class="summary" aria-live="polite">
+    <div><div class="lab" id="sL">Vertical load</div><div class="num" id="sV">–</div><div class="sub" id="sVk"></div></div>
+    <div class="hot" data-show="tab=adv"><div class="lab">Rigging design load</div><div class="num" id="sD">–</div><div class="sub" id="sDk"></div></div>
+  </div>
+
+  <section id="secC">
+    <h2>Conductor</h2>
+    <div class="grid">
+      <div class="full unitrow" data-show="tab=adv">
+        <span>Set units to match the drawing</span>
+        <div><button type="button" class="reset" id="uImp">Links, feet, lb</button> <button type="button" class="reset" id="uMet">Metric</button></div>
+      </div>
+      <label class="f full">Conductor
+        <select id="cond"></select>
+      </label>
+      <label class="f">Mass <span class="u">per conductor</span>
+        <input type="number" id="mass" data-unit="massU" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" id="fUts">Breaking load <span class="u">kN</span>
+        <input type="number" id="uts" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f full">Conductors on this rigging <span class="u">1 for simplex or one subconductor, 2 for a duplex pair together</span>
+        <input type="number" id="n" inputmode="numeric" step="1" min="1">
+      </label>
+    </div>
+  </section>
+
+  <section id="secT">
+    <h2><span id="hT">Tension</span></h2>
+    <div class="fig" id="figT"></div>
+    <div class="seg" role="radiogroup" aria-label="Tension source">
+      <label data-show="tab=adv"><input type="radio" name="tmode" value="known">Drawing</label>
+      <label><input type="radio" name="tmode" value="sag">Sag</label>
+      <label><input type="radio" name="tmode" value="wave">Return wave</label>
+      <label><input type="radio" name="tmode" value="uts">% UTS</label>
+    </div>
+    <div class="grid">
+      <label class="f full" data-show="tmode=known">Tension per conductor <span class="u">no-wind or everyday figure from the route plan and profile</span>
+        <input type="number" id="tKnown" data-unit="tU" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" id="fSpan">Span length
+        <input type="number" id="tSpan" data-unit="spU" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" data-show="tmode=sag">Measured sag <span class="u">mid-span</span>
+        <input type="number" id="tSag" data-unit="hU" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" data-show="tmode=wave">Time for the returns <span class="u">seconds</span>
+        <input type="number" id="wTime" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" data-show="tmode=wave">Returns counted
+        <input type="number" id="wN" inputmode="numeric" step="1" min="1">
+      </label>
+      <label class="f full" id="fTH">Height above the structure at the other end of this span <span class="u">minus if this structure is lower, 0 if level</span>
+        <input type="number" id="tH" data-unit="hU" inputmode="decimal" step="any">
+      </label>
+      <label class="f full" data-show="tmode=uts">Tension as % of breaking load
+        <input type="number" id="tPct" inputmode="decimal" step="any" min="0" max="100">
+      </label>
+    </div>
+    <div class="outs">
+      <div class="out" data-show="tmode=wave"><span>Sag from the wave timing</span><b id="oSag">–</b></div>
+      <div class="out"><span>Horizontal tension, per conductor</span><b id="oT1">–</b></div>
+      <div class="out"><span>At this structure, per conductor</span><b id="oTs">–</b></div>
+      <div class="out" data-show="load=tens"><span>Conductor leaves the structure at</span><b id="oAng">–</b></div>
+      <div class="out" data-show="load=tens"><span>Horizontal part of the pull</span><b id="oHp">–</b></div>
+      <div class="out" data-show="load=tens"><span>Vertical part of the pull</span><b id="oVp">–</b></div>
+      <div class="out"><span>Share of breaking load</span><b id="oTpct">–</b></div>
+      <div class="out big"><span>Tension on rigging</span><b id="oTtot">–</b></div>
+    </div>
+    <div class="note" id="nT" hidden></div>
+  </section>
+
+  <section id="secV" data-show="load=vert">
+    <h2>Vertical load at the structure</h2>
+    <div class="fig" id="figV"></div>
+    <div class="fig" id="figA" hidden></div>
+    <div class="seg" role="radiogroup" aria-label="Weight span source" data-show="tab=adv">
+      <label><input type="radio" name="vmode" value="ws">Enter weight span</label>
+      <label><input type="radio" name="vmode" value="calc">Work it out</label>
+    </div>
+    <div class="grid">
+      <label class="f full" data-show="vmode=ws">Weight span <span class="u">from the schedule, or Sed on newer drawings. Use the largest figure listed for the structure</span>
+        <input type="number" id="ws" data-unit="wsU" inputmode="decimal" step="any">
+      </label>
+      <label class="f" data-show="vmode=calc">Back span
+        <input type="number" id="l1" data-unit="spU" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" data-show="vmode=calc">Height above back structure <span class="u">minus if lower</span>
+        <input type="number" id="h1" data-unit="hU" inputmode="decimal" step="any">
+      </label>
+      <label class="f" data-show="vmode=calc">Ahead span
+        <input type="number" id="l2" data-unit="spU" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" data-show="vmode=calc">Height above ahead structure <span class="u">minus if lower</span>
+        <input type="number" id="h2" data-unit="hU" inputmode="decimal" step="any">
+      </label>
+      <label class="f" data-show="tab=adv">Hardware lifted <span class="u">kg, insulators and fittings</span>
+        <input type="number" id="hw" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" data-show="tab=adv">Hold-down weights <span class="u">if fitted</span>
+        <input type="number" id="wt" data-unit="wtU" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f full" data-show="tab=adv">Line deviation angle <span class="u">degrees, change of bearing or PI angle, 0 if straight</span>
+        <input type="number" id="dev" inputmode="decimal" step="any" min="0" max="180">
+      </label>
+    </div>
+    <div class="outs">
+      <div class="out"><span>Weight span used</span><b id="oWs">–</b></div>
+      <div class="out"><span>Conductor weight</span><b id="oWc">–</b></div>
+      <div class="out" data-show="tab=adv"><span>Hardware and weights</span><b id="oHw">–</b></div>
+      <div class="out" data-show="tab=adv"><span>Vertical load</span><b id="oV">–</b></div>
+      <div class="out" data-show="tab=adv"><span>Sideways pull from angle</span><b id="oTr">–</b></div>
+      <div class="out big"><span id="oRlab">Lift load on rigging</span><b id="oR">–</b></div>
+    </div>
+    <p class="hint" data-show="tab=basic">Straight-line structures only. For angle structures, insulator weight or hold-down weights, use Advanced.</p>
+    <div class="note" id="nV" hidden></div>
+  </section>
+
+  <section id="secR" data-show="tab=adv">
+    <h2>Rigging</h2>
+    <div class="fig" id="figR"></div>
+    <div class="seg" role="radiogroup" aria-label="Method">
+      <label><input type="radio" name="method" value="direct">Hoist in line</label>
+      <label><input type="radio" name="method" value="tackle">Rope and blocks</label>
+    </div>
+    <div class="grid">
+      <label class="f full">Dynamic factor <span class="u">allowance for snatch and movement, set to your procedure</span>
+        <input type="number" id="dyn" inputmode="decimal" step="any" min="1">
+      </label>
+      <label class="f" data-show="method=tackle">Parts of line on the load
+        <input type="number" id="parts" inputmode="numeric" step="1" min="1">
+      </label>
+      <label class="f" data-show="method=tackle">Sheaves the rope runs over
+        <input type="number" id="sheaves" inputmode="numeric" step="1" min="0">
+      </label>
+      <label class="f" data-show="method=tackle">Friction per sheave <span class="u">%</span>
+        <input type="number" id="fric" inputmode="decimal" step="any" min="0">
+      </label>
+      <label class="f" data-show="method=tackle">Angle between rope legs at the redirect block <span class="u">degrees</span>
+        <input type="number" id="redir" inputmode="decimal" step="any" min="0" max="180">
+      </label>
+      <label class="f">Sling legs
+        <select id="legs"><option value="1">1 leg</option><option value="2">2 legs</option></select>
+      </label>
+      <label class="f" data-show="legs=2">Angle between sling legs <span class="u">degrees</span>
+        <input type="number" id="slingAngle" inputmode="decimal" step="any" min="0" max="170">
+      </label>
+    </div>
+    <p class="hint">Enter each item's working load limit to check it. Leave blank to see the minimum you need.</p>
+    <div id="checks" style="display:flex;flex-direction:column;gap:10px"></div>
+    <div class="note" id="nR" hidden></div>
+  </section>
+
+  <footer>
+    <p><strong>Reference aid only.</strong> Check every figure against the route plan and profile, the manufacturer's ratings and your company procedure before rigging. Conductor list is from the Prysmian NZ bare overhead conductor catalogue. Where the drawing states a conductor weight, use the drawing.</p>
+    <p>Method: weight = mass × 9.81 × weight span. Weight span each side = span ÷ 2 + (tension ÷ unit weight) × (height difference ÷ span). Tension from sag = unit weight × span² ÷ (8 × sag). Return wave: tension = mass × (2 × span × returns ÷ time)². Tension at a structure = horizontal tension + unit weight × height above the low point of the span. Still air, no wind or ice. 1 link = 0.2012 m, 1 lb = 4.448 N, 1 lb/ft = 1.488 kg/m.</p>
+  </footer>
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
