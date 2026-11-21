@@ -28,7 +28,9 @@ npm run build    # writes the finished web files to dist/
 | `src/help.js` | Help text for each input and section |
 | `src/diagrams.js` | The diagrams, drawn from the inputs |
 | `src/format.js` | Number formatting (kN, kg) |
-| `src/main.js` | Screen logic: showing and hiding inputs, results, saved state |
+| `src/main.js` | Screen logic: showing and hiding inputs, results, saved jobs, my conductors, terms |
+| `src/summary.js` | The text summary used by Share result |
+| `src/store.js` | Guarded access to on-device storage |
 | `src/styles.css` | Styles, light and dark |
 | `tests/calc.test.js` | Known jobs with hand-worked answers |
 
@@ -49,4 +51,6 @@ Fonts are bundled, so the built app makes no network requests and works offline.
 - Independent engineering check of the formulas and conductor data.
 - Confirm the meaning of the `Sed` label on PLS-CADD drawings (treated as everyday weight span).
 - Default dynamic factor (1.1) and sheave friction (5%) are placeholders.
-- Next: saved jobs, editable conductor list, result export, first-launch terms screen, then Capacitor for iOS and Android.
+- Saved jobs, my conductors and accepted terms are kept in the browser's local storage on the device. Move these to Capacitor Preferences when the native apps are added, because iOS can clear web storage.
+- Result sharing is a text summary. A PDF export is not built.
+- Next: Capacitor for iOS and Android (needs the app ID), then store listings.

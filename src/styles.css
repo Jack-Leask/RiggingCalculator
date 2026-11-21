@@ -122,3 +122,27 @@ section h2 .gbtn{margin-left:auto;font-family:var(--body);font-size:12px;padding
 footer{font-size:12.5px;color:var(--muted);padding:0 2px}
 footer p{margin:0 0 6px}
 @media (max-width:360px){.summary .num{font-size:22px}.chk-b{grid-template-columns:1fr 110px}}
+
+/* saved jobs, my conductors, share, terms */
+.btn{font:inherit;font-size:15px;font-weight:600;color:var(--accent-ink);background:var(--accent);border:1px solid transparent;border-radius:7px;padding:10px 14px;cursor:pointer}
+.btn.alt{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.brow{display:flex;gap:10px;flex-wrap:wrap}
+.brow .btn{flex:1 1 140px}
+.crow{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.namerow{display:flex;gap:8px;width:100%}
+.namerow input{flex:1 1 0;min-width:0}
+input[type=text],textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%;min-width:0}
+textarea{font-size:13px;line-height:1.35;resize:vertical}
+input[type=text]:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#jobList{display:flex;flex-direction:column;gap:8px}
+.job{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.job .jn{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.job .jd{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.job .jb{display:flex;gap:6px;flex:0 0 auto}
+.job .reset.del[data-armed]{background:var(--crit-bg);color:var(--crit);border-color:transparent}
+.terms{position:fixed;inset:0;z-index:20;background:var(--bg);overflow:auto;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
+.terms-in{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.terms h2{font-family:var(--display);font-size:28px;line-height:1.1;margin:0;text-wrap:balance}
+.terms p,.terms ul{margin:0;font-size:16px}
+.terms ul{padding-left:20px;display:flex;flex-direction:column;gap:8px}

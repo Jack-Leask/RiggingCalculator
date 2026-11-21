@@ -10,6 +10,8 @@ import { kN, kgs, both } from "./format.js";
 import { PRESETS } from "./conductors.js";
 import { HELP, GUIDES } from "./help.js";
 import { dVert, dAngle, dTens, dRig } from "./diagrams.js";
+import { summary } from "./summary.js";
+import * as store from "./store.js";
 
 var DEFAULTS = {
   tab:"basic", load:"vert",
@@ -54,6 +56,8 @@ function render(){
   $("fTH").hidden = !(adv && !vert);
   $("fUts").hidden = !(adv || (needT && E.tmode === "uts"));
   document.body.className = adv ? "" : "basic";
+  $("condSave").hidden = !(S.cond === "custom" && si(S, "mass") > 0);
+  $("condDel").hidden = String(S.cond).indexOf("my-") !== 0;
   var main = vert ? r.lift : r.tTot;
   set("sL", vert ? (r.tr > 0 ? "Lift load at angle" : "Vertical load") : "Tension load");
   big("sV", main); set("sVk", kgs(main));
@@ -117,6 +121,43 @@ function render(){
 }
 
 /* ---------- wiring ---------- */
+var K_JOBS = "crl-jobs-v1", K_COND = "crl-conductors-v1", K_TERMS = "crl-terms-v1";
+var jobs = store.get(K_JOBS, []), mine = store.get(K_COND, []);
+if (!Array.isArray(jobs)) jobs = [];
+if (!Array.isArray(mine)) mine = [];
+function findCond(key){
+  var i;
+  for (i = 0; i < PRESETS.length; i++) if (PRESETS[i][0] === key) return PRESETS[i];
+  for (i = 0; i < mine.length; i++) if (mine[i][0] === key) return mine[i];
+  return null;
+}
+function fillCond(){
+  var sel = $("cond"), i, g;
+  function opt(parent, c){ var o = document.createElement("option"); o.value = c[0]; o.textContent = c[1]; parent.appendChild(o); }
+  sel.innerHTML = "";
+  opt(sel, PRESETS[0]);
+  if (mine.length) { g = document.createElement("optgroup"); g.label = "My conductors"; for (i = 0; i < mine.length; i++) opt(g, mine[i]); sel.appendChild(g); }
+  g = document.createElement("optgroup"); g.label = "Catalogue";
+  for (i = 1; i < PRESETS.length; i++) opt(g, PRESETS[i]);
+  sel.appendChild(g);
+}
+function msg(id, text){ var e = $(id); e.hidden = !text; e.textContent = text || ""; }
+function esc(t){ return String(t).replace(/[&<>"]/g, function(ch){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]; }); }
+function renderJobs(){
+  var h = "", i, j, r, E, main;
+  for (i = 0; i < jobs.length; i++) {
+    j = jobs[i]; r = calc(j.state); E = eff(j.state); main = E.load === "vert" ? r.lift : r.tTot;
+    h += '<div class="job"><div><div class="jn">' + esc(j.name) + '</div><div class="jd">' + (E.tab === "adv" ? "Advanced" : "Basic") + ", " + (E.load === "vert" ? "vertical" : "tension") + ", " + kN(main) + " · saved " + esc(j.date || "") + '</div></div>' +
+         '<div class="jb"><button type="button" class="reset" data-job-load="' + i + '">Load</button><button type="button" class="reset del" data-job-del="' + i + '">Delete</button></div></div>';
+  }
+  $("jobList").innerHTML = h;
+}
+function today(){ try { return new Date().toLocaleDateString("en-NZ", {day:"numeric", month:"short", year:"numeric"}); } catch (e) { return ""; } }
+function summaryText(){
+  var c = findCond(S.cond), checks = [], i;
+  for (i = 0; i < CHECKS.length; i++) checks.push({id:CHECKS[i][1], name:CHECKS[i][2], wll:S["w" + CHECKS[i][0]]});
+  return summary(S, eff(S), calc(S), {name:$("jobName").value.trim(), date:today(), conductor:c && c[0] !== "custom" ? c[1] : "Custom", checks:checks});
+}
 function load(){
   var saved = null;
   try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
@@ -143,13 +184,7 @@ function setUnits(target){
   push(); render(); save();
 }
 function build(){
-  var sel = $("cond");
-  for (var i = 0; i < PRESETS.length; i++) {
-    var o = document.createElement("option");
-    o.value = PRESETS[i][0];
-    o.textContent = PRESETS[i][1];
-    sel.appendChild(o);
-  }
+  fillCond();
   var UOPT = {massU:[["kgm","kg/m"],["lbft","lb/ft"]], tU:[["kN","kN"],["kgf","kg"],["lbf","lb"]], wsU:[["m","m"],["lk","links"],["ft","ft"]], spU:[["m","m"],["lk","links"],["ft","ft"]], hU:[["m","m"],["ft","ft"]], wtU:[["kg","kg"],["lb","lb"]]};
   var ins = document.querySelectorAll("input[data-unit]");
   for (var q = 0; q < ins.length; q++) {
@@ -170,7 +205,7 @@ function build(){
     lt.appendChild(nm); lt.appendChild(qb); lab.insertBefore(lt, lab.firstChild); lab.appendChild(hp);
     toggler(qb, hp);
   }
-  var secs = ["secC", "secT", "secV", "secR"];
+  var secs = ["secC", "secT", "secV", "secR", "secJ"];
   for (var b = 0; b < secs.length; b++) {
     var h2 = $(secs[b]).querySelector("h2"), gb = document.createElement("button"), gd = document.createElement("div");
     gb.type = "button"; gb.className = "reset gbtn"; gb.textContent = "Guide"; gb.setAttribute("aria-expanded", "false");
@@ -197,19 +232,83 @@ function toggler(btn, panel){
 }
 function onInput(e){
   var t = e.target;
+  if (t.closest && t.closest("[data-nostate]")) return;
   if (t.getAttribute && t.getAttribute("data-u")) { S[t.getAttribute("data-u")] = t.value; push(); render(); save(); return; }
   if (t.type === "radio") S[t.name] = t.value;
   if (t.name === "tab" && t.value === "basic") { if (S.tmode === "known") S.tmode = "sag"; setUnits(METRIC); return; }
   else if (t.id) S[t.id] = t.value;
   if (t.id === "cond") {
-    for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i][0] === t.value && PRESETS[i][2]) {
-      S.mass = PRESETS[i][2]; S.uts = PRESETS[i][3]; S.massU = "kgm"; $("u-mass").value = "kgm"; $("mass").value = S.mass; $("uts").value = S.uts;
-    }
+    var pc = findCond(t.value);
+    if (pc && pc[2]) { S.mass = pc[2]; S.uts = pc[3] === null || pc[3] === undefined ? "" : pc[3]; S.massU = "kgm"; $("u-mass").value = "kgm"; $("mass").value = S.mass; $("uts").value = S.uts; }
+    $("condNameRow").hidden = true; msg("condMsg", "");
   }
   if (t.id === "mass" || t.id === "uts") { S.cond = "custom"; $("cond").value = "custom"; }
   render(); save();
 }
-build(); load(); push(); render();
+build(); load();
+if (!findCond(S.cond)) S.cond = "custom";
+push(); render(); renderJobs();
+
+/* ---------- my conductors ---------- */
+$("condSave").addEventListener("click", function(){ $("condNameRow").hidden = false; $("condName").value = ""; $("condName").focus(); });
+$("condOk").addEventListener("click", function(){
+  var name = $("condName").value.trim(), m = si(S, "mass"), u = num(S.uts);
+  if (!name) { msg("condMsg", "Type a name for this conductor first."); return; }
+  if (!(m > 0)) { msg("condMsg", "Enter the conductor mass first."); return; }
+  var key = "my-" + Date.now();
+  mine.push([key, name, parseFloat(m.toPrecision(6)), isFinite(u) && u > 0 ? u : null]);
+  var ok = store.put(K_COND, mine);
+  fillCond(); S.cond = key; S.mass = mine[mine.length - 1][2]; S.massU = "kgm";
+  $("condNameRow").hidden = true; push(); render(); save();
+  msg("condMsg", ok ? "Saved to my conductors on this device." : "Added for now, but this device would not store it.");
+});
+$("condDel").addEventListener("click", function(){
+  mine = mine.filter(function(c){ return c[0] !== S.cond; });
+  store.put(K_COND, mine); fillCond(); S.cond = "custom"; push(); render(); save();
+  msg("condMsg", "Removed. The figures stay on screen as a custom conductor.");
+});
+
+/* ---------- saved jobs and sharing ---------- */
+$("jobSave").addEventListener("click", function(){
+  var name = $("jobName").value.trim(), i, copy = {}, k;
+  if (!name) { msg("jobMsg", "Give the job a name first."); $("jobName").focus(); return; }
+  for (k in S) copy[k] = S[k];
+  var rec = {name:name, date:today(), state:copy}, found = false;
+  for (i = 0; i < jobs.length; i++) if (jobs[i].name.toLowerCase() === name.toLowerCase()) { jobs[i] = rec; found = true; }
+  if (!found) jobs.unshift(rec);
+  var ok = store.put(K_JOBS, jobs);
+  renderJobs();
+  msg("jobMsg", ok ? (found ? "Updated the saved job \u201c" + name + "\u201d." : "Saved \u201c" + name + "\u201d on this device.") : "This device would not store the job.");
+});
+$("jobList").addEventListener("click", function(ev){
+  var t = ev.target, li = t.getAttribute("data-job-load"), di = t.getAttribute("data-job-del"), k;
+  if (li !== null && jobs[li]) {
+    S = {}; for (k in DEFAULTS) S[k] = jobs[li].state[k] !== undefined ? jobs[li].state[k] : DEFAULTS[k];
+    if (!findCond(S.cond)) S.cond = "custom";
+    $("jobName").value = jobs[li].name; push(); render(); save();
+    msg("jobMsg", "Loaded \u201c" + jobs[li].name + "\u201d.");
+    try { window.scrollTo({top:0, behavior:"smooth"}); } catch (e) { window.scrollTo(0, 0); }
+  } else if (di !== null && jobs[di]) {
+    if (!t.hasAttribute("data-armed")) { t.setAttribute("data-armed", ""); t.textContent = "Tap again to delete"; return; }
+    var gone = jobs.splice(di, 1)[0]; store.put(K_JOBS, jobs); renderJobs(); msg("jobMsg", "Deleted \u201c" + gone.name + "\u201d.");
+  }
+});
+$("share").addEventListener("click", function(){
+  var text = summaryText(), box = $("shareBox");
+  function show(note){ box.hidden = false; box.value = text; msg("jobMsg", note); }
+  if (navigator.share) {
+    navigator.share({title:"Conductor Rigging Loads", text:text}).then(function(){ msg("jobMsg", "Shared."); }, function(err){ if (!err || err.name !== "AbortError") show("Sharing was not available. The summary is below to copy."); });
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function(){ show("Copied. The summary is also below."); }, function(){ show("The summary is below to copy."); });
+  } else show("The summary is below to copy.");
+});
+
+/* ---------- first-launch terms ---------- */
+if (store.get(K_TERMS, false) !== true) {
+  $("terms").hidden = false;
+  $("termsOk").addEventListener("click", function(){ store.put(K_TERMS, true); $("terms").hidden = true; });
+  $("termsOk").focus();
+}
 document.addEventListener("input", onInput);
 document.addEventListener("change", onInput);
 $("reset").addEventListener("click", function(){

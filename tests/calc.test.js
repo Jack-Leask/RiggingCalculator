@@ -88,3 +88,27 @@ describe("rigging", () => {
     expect(r.out.rope).toBeNull();
   });
 });
+
+import { eff } from "../src/calc.js";
+import { summary } from "../src/summary.js";
+
+describe("share summary", () => {
+  it("lists the inputs as entered and the results", () => {
+    const S = { ...base, mass: 0.49, massU: "lbft", ws: 2168, wsU: "lk", wHoist: 500 };
+    const text = summary(S, eff(S), calc(S), { name: "CST-SFD A Tower 54", conductor: "Custom", date: "21 Nov 2026",
+      checks: [{ id: "hoist", name: "Hoist or tackle blocks", wll: 500 }, { id: "rope", name: "Haul rope and capstan", wll: "" }] });
+    expect(text).toContain("Job: CST-SFD A Tower 54");
+    expect(text).toContain("Weight span: 2168 links (436.1 m)");
+    expect(text).toContain("0.49 lb/ft (0.7292 kg/m)");
+    expect(text).toContain("Vertical load: 3.12 kN (318 kg)");
+    expect(text).toContain("Hoist or tackle blocks: 3.12 kN (318 kg), WLL 500 kg, 64% used");
+    expect(text).not.toContain("Haul rope");   // not part of a hoist-in-line set-up
+    expect(text).toContain("Reference aid only");
+  });
+  it("Basic tension summary leaves out rigging", () => {
+    const S = { ...base, tab: "basic", load: "tens", tmode: "wave" };
+    const text = summary(S, eff(S), calc(S), {});
+    expect(text).toContain("3 returns in 15.3 s");
+    expect(text).not.toContain("RIGGING (");
+  });
+});

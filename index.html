@@ -44,6 +44,15 @@
       <label class="f full">Conductor
         <select id="cond"></select>
       </label>
+      <div class="full crow" data-nostate>
+        <button type="button" class="reset" id="condSave" hidden>Save to my conductors</button>
+        <button type="button" class="reset" id="condDel" hidden>Remove from my conductors</button>
+        <div class="namerow" id="condNameRow" hidden>
+          <input type="text" id="condName" placeholder="Name, e.g. 7/.173 Al + 7/.076 St" aria-label="Conductor name" maxlength="60">
+          <button type="button" class="btn" id="condOk">Save</button>
+        </div>
+        <p class="hint" id="condMsg" aria-live="polite" hidden></p>
+      </div>
       <label class="f">Mass <span class="u">per conductor</span>
         <input type="number" id="mass" data-unit="massU" inputmode="decimal" step="any" min="0">
       </label>
@@ -182,10 +191,38 @@
     <div class="note" id="nR" hidden></div>
   </section>
 
+  <section id="secJ" data-nostate>
+    <h2>Save and share</h2>
+    <label class="f">Job name
+      <input type="text" id="jobName" placeholder="e.g. CST-SFD A Tower 54 lift" maxlength="80">
+    </label>
+    <div class="brow">
+      <button type="button" class="btn" id="jobSave">Save this job</button>
+      <button type="button" class="btn alt" id="share">Share result</button>
+    </div>
+    <p class="hint" id="jobMsg" aria-live="polite" hidden></p>
+    <textarea id="shareBox" rows="12" readonly aria-label="Result summary" hidden></textarea>
+    <div id="jobList"></div>
+  </section>
+
   <footer>
     <p><strong>Reference aid only.</strong> Check every figure against the route plan and profile, the manufacturer's ratings and your company procedure before rigging. Conductor list is from the Prysmian NZ bare overhead conductor catalogue. Where the drawing states a conductor weight, use the drawing.</p>
     <p>Method: weight = mass × 9.81 × weight span. Weight span each side = span ÷ 2 + (tension ÷ unit weight) × (height difference ÷ span). Tension from sag = unit weight × span² ÷ (8 × sag). Return wave: tension = mass × (2 × span × returns ÷ time)². Tension at a structure = horizontal tension + unit weight × height above the low point of the span. Still air, no wind or ice. 1 link = 0.2012 m, 1 lb = 4.448 N, 1 lb/ft = 1.488 kg/m.</p>
   </footer>
+</div>
+<div class="terms" id="terms" role="dialog" aria-modal="true" aria-labelledby="termsH" hidden>
+  <div class="terms-in">
+    <h2 id="termsH">Before you use this calculator</h2>
+    <p>This is a <strong>reference aid</strong>. It does not replace a lift plan, an engineer, the route plan and profile, or your company's procedures.</p>
+    <ul>
+      <li>You are responsible for checking every figure before rigging.</li>
+      <li>Check loads against the manufacturer's ratings for every item in the load path.</li>
+      <li>Results assume still air, with no wind or ice, and are only as good as the figures entered.</li>
+      <li>Conductor data is catalogue data. Use the figure on the drawing where it gives one.</li>
+      <li>If a result looks wrong, stop and get it checked.</li>
+    </ul>
+    <button type="button" class="btn" id="termsOk">I understand and accept</button>
+  </div>
 </div>
 <script type="module" src="/src/main.js"></script>
 </body>
