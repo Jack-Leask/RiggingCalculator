@@ -12,6 +12,7 @@ import { HELP, GUIDES } from "./help.js";
 import { dVert, dAngle, dTens, dRig } from "./diagrams.js";
 import { summary } from "./summary.js";
 import * as store from "./store.js";
+import { Share } from "@capacitor/share";
 
 var DEFAULTS = {
   tab:"basic", load:"vert",
@@ -122,9 +123,7 @@ function render(){
 
 /* ---------- wiring ---------- */
 var K_JOBS = "crl-jobs-v1", K_COND = "crl-conductors-v1", K_TERMS = "crl-terms-v1";
-var jobs = store.get(K_JOBS, []), mine = store.get(K_COND, []);
-if (!Array.isArray(jobs)) jobs = [];
-if (!Array.isArray(mine)) mine = [];
+var jobs = [], mine = [];
 function findCond(key){
   var i;
   for (i = 0; i < PRESETS.length; i++) if (PRESETS[i][0] === key) return PRESETS[i];
@@ -159,12 +158,11 @@ function summaryText(){
   return summary(S, eff(S), calc(S), {name:$("jobName").value.trim(), date:today(), conductor:c && c[0] !== "custom" ? c[1] : "Custom", checks:checks});
 }
 function load(){
-  var saved = null;
-  try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+  var saved = store.get(KEY, null);
   S = {};
   for (var k in DEFAULTS) S[k] = (saved && saved[k] !== undefined) ? saved[k] : DEFAULTS[k];
 }
-function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function save(){ store.put(KEY, S); }
 function push(){
   for (var k in S) {
     if (RADIOS.indexOf(k) >= 0) {
@@ -245,9 +243,21 @@ function onInput(e){
   if (t.id === "mass" || t.id === "uts") { S.cond = "custom"; $("cond").value = "custom"; }
   render(); save();
 }
-build(); load();
-if (!findCond(S.cond)) S.cond = "custom";
-push(); render(); renderJobs();
+build(); load(); push(); render();
+// Saved values can take a moment to arrive inside the native apps, so finish start-up once they are in.
+store.ready([KEY, K_JOBS, K_COND, K_TERMS]).then(function(){
+  jobs = store.get(K_JOBS, []); mine = store.get(K_COND, []);
+  if (!Array.isArray(jobs)) jobs = [];
+  if (!Array.isArray(mine)) mine = [];
+  fillCond(); load();
+  if (!findCond(S.cond)) S.cond = "custom";
+  push(); render(); renderJobs();
+  if (store.get(K_TERMS, false) !== true) {
+    $("terms").hidden = false;
+    $("termsOk").addEventListener("click", function(){ store.put(K_TERMS, true); $("terms").hidden = true; });
+    $("termsOk").focus();
+  }
+});
 
 /* ---------- my conductors ---------- */
 $("condSave").addEventListener("click", function(){ $("condNameRow").hidden = false; $("condName").value = ""; $("condName").focus(); });
@@ -296,19 +306,15 @@ $("jobList").addEventListener("click", function(ev){
 $("share").addEventListener("click", function(){
   var text = summaryText(), box = $("shareBox");
   function show(note){ box.hidden = false; box.value = text; msg("jobMsg", note); }
-  if (navigator.share) {
+  if (store.isNative()) {
+    Share.share({title:"Conductor Rigging Loads", text:text, dialogTitle:"Share result"}).then(function(){ msg("jobMsg", "Shared."); }, function(err){ if (!err || !/cancel/i.test(String(err.message || err))) show("Sharing was not available. The summary is below to copy."); });
+  } else if (navigator.share) {
     navigator.share({title:"Conductor Rigging Loads", text:text}).then(function(){ msg("jobMsg", "Shared."); }, function(err){ if (!err || err.name !== "AbortError") show("Sharing was not available. The summary is below to copy."); });
   } else if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(function(){ show("Copied. The summary is also below."); }, function(){ show("The summary is below to copy."); });
   } else show("The summary is below to copy.");
 });
 
-/* ---------- first-launch terms ---------- */
-if (store.get(K_TERMS, false) !== true) {
-  $("terms").hidden = false;
-  $("termsOk").addEventListener("click", function(){ store.put(K_TERMS, true); $("terms").hidden = true; });
-  $("termsOk").focus();
-}
 document.addEventListener("input", onInput);
 document.addEventListener("change", onInput);
 $("reset").addEventListener("click", function(){

@@ -18,6 +18,24 @@ npm test         # run the load maths tests
 npm run build    # writes the finished web files to dist/
 ```
 
+## Native apps (Capacitor)
+
+App name: **Conductor Rigging Loads**. App ID: `nz.riggingloads.app` (set in `capacitor.config.ts`; it cannot change after the app is published).
+
+```
+npm run android   # build, sync and open Android Studio
+npm run ios       # build, sync and open Xcode (Mac only, Xcode 26 or later)
+npm run sync      # build and copy the web files into both native projects
+```
+
+Run one of these after every change to the web code. The `android/` and `ios/` folders are real native projects and are committed.
+
+The icon and splash screen come from `assets/logo.svg`. To change them, edit the SVG, export it to `assets/logo.png` at 1024 px, then run:
+
+```
+npx @capacitor/assets generate --ios --android --iconBackgroundColor '#172126' --iconBackgroundColorDark '#172126' --splashBackgroundColor '#172126' --splashBackgroundColorDark '#172126'
+```
+
 ## Layout
 
 | File | What it holds |
@@ -51,6 +69,7 @@ Fonts are bundled, so the built app makes no network requests and works offline.
 - Independent engineering check of the formulas and conductor data.
 - Confirm the meaning of the `Sed` label on PLS-CADD drawings (treated as everyday weight span).
 - Default dynamic factor (1.1) and sheave friction (5%) are placeholders.
-- Saved jobs, my conductors and accepted terms are kept in the browser's local storage on the device. Move these to Capacitor Preferences when the native apps are added, because iOS can clear web storage.
+- Saved jobs, my conductors and accepted terms are stored on the device only: local storage in a browser, plus Capacitor Preferences inside the native apps.
 - Result sharing is a text summary. A PDF export is not built.
-- Next: Capacitor for iOS and Android (needs the app ID), then store listings.
+- The native apps have not been built or run on a device yet. Storage and the share sheet need testing on real phones.
+- Next: build and test on devices, then store listings.

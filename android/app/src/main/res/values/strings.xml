@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Conductor Rigging Loads</string>
+    <string name="title_activity_main">Conductor Rigging Loads</string>
+    <string name="package_name">nz.riggingloads.app</string>
+    <string name="custom_url_scheme">nz.riggingloads.app</string>
+</resources>

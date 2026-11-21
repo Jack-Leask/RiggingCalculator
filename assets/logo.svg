@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Two structures, a conductor hanging between them, and the load on the rigging -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M232 300v430M792 300v430" stroke="#e9eeec" stroke-width="44"/>
+    <path d="M176 330h112M736 330h112" stroke="#e9eeec" stroke-width="44"/>
+    <path d="M232 330Q512 700 792 330" stroke="#e9eeec" stroke-width="40"/>
+    <path d="M512 540v200" stroke="#f97316" stroke-width="56"/>
+    <path d="M430 670l82 96 82-96" stroke="#f97316" stroke-width="56"/>
+  </g>
+</svg>
